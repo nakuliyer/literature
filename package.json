@@ -17,7 +17,7 @@
     "scripts": {
         "start": "node server/index.js",
         "dev": "nodemon server",
-        "build": "npm install && npm run build",
+        "build": "react-scripts build",
         "test": "react-scripts test",
         "eject": "react-scripts eject"
     },
