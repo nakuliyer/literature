@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const playerName = document.querySelector("#start-game-name-area")
     document.querySelector('#join-game-button').addEventListener('click', startMultiPlayer)
     document.querySelector("#dc-game-button").addEventListener('click', dc)
+    document.getElementById("drop-all-button").addEventListener('click', dcAll)
     document.getElementById("shuffle-teams-button").addEventListener('click', shuffleTeams)
     document.getElementById("start-game-button").addEventListener('click', startGame)
     document.getElementById("ask-button").addEventListener('click', askForCard)
@@ -22,6 +23,17 @@ document.addEventListener('DOMContentLoaded', () => {
     let messages = []
     let players = []
     let myIndex = -1
+
+    function reset() {
+        document.getElementById("shuffle-teams-button").style.display = "none"
+        document.getElementById("start-game-button").style.display = "none"
+        document.getElementById("player-info-table").innerHTML = ""
+        document.getElementById("messages").innerHTML = "Messages:"
+        document.getElementById("messages").style.display = "none"
+        document.getElementById("hand").innerHTML = ""
+        document.getElementById("askbox").style.display = "none"
+        document.getElementById("declarebox").style.display = "none"
+    }
     
     function startMultiPlayer() {
         socket = io();
@@ -44,34 +56,34 @@ document.addEventListener('DOMContentLoaded', () => {
             const names = teams[0].concat(teams[1])
             document.getElementById("player-name-selector").innerHTML = names.map((name) => `<option>${name}</option>`).join()
         })
-        socket.on('message', ({ message, playerInTurn, books }) => {
+        socket.on('message', ({ message }) => {
             messages.push(message)
             messages = messages.slice(-1 * LAST_N_MESSAGES)
             document.getElementById("messages").innerHTML = `Messages:<br/>${messages.join("<br/>")}`
             socket.emit('get-hand')
-            socket.on('get-hand-response', (handNames, handCodes) => {
-                let handText = []
-                if (books[0].length) {
-                    handText.push(`Team 1 has ${books[0].join(", ")}`)
-                } else {
-                    handText.push(`Team 1 has no books`)
-                }
-                if (books[1].length) {
-                    handText.push(`Team 2 has ${books[1].join(", ")}`)
-                } else {
-                    handText.push(`Team 2 has no books`)
-                }
-                if (books[0].length > 4 || books[1].length > 4) {
-                    handText.push(`Game Over!`)
-                }
-                handText.push("")
-                // handText.push(`Your Hand: ${handNames.join(", ")}`)
-                handText.push(`Your Hand:`)
-                handText.push(handCodes.map((card) => `<img src="card/static/${card}.svg" style="width: 80px" />`).join(""))
-                document.getElementById("hand").innerHTML = handText.join("<br/>")
-                document.getElementById("declarebox").style.display = "inline"
-                document.getElementById("messages").style.display = "inline"
-            })
+        })
+        socket.on('get-hand-response', ({ handNames, handCodes, playerInTurn, books }) => {
+            let handText = []
+            if (books[0].length) {
+                handText.push(`Team 1 has ${books[0].join(", ")}`)
+            } else {
+                handText.push(`Team 1 has no books`)
+            }
+            if (books[1].length) {
+                handText.push(`Team 2 has ${books[1].join(", ")}`)
+            } else {
+                handText.push(`Team 2 has no books`)
+            }
+            if (books[0].length > 4 || books[1].length > 4) {
+                handText.push(`Game Over!`)
+            }
+            handText.push("")
+            // handText.push(`Your Hand: ${handNames.join(", ")}`)
+            handText.push(`Your Hand:`)
+            handText.push(handCodes.map((card) => `<img src="card/static/${card}.svg" style="width: 80px" />`).join(""))
+            document.getElementById("hand").innerHTML = handText.join("<br/>")
+            document.getElementById("declarebox").style.display = "inline"
+            document.getElementById("messages").style.display = "inline"
             if (playerInTurn === myIndex) {
                 document.getElementById("askbox").style.display = "block"
             } else {
@@ -89,19 +101,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert("Game is already on. Press End Game to stop.")
             }
         })
+        socket.on("prepare-dc", () => {
+            reset()
+            socket.disconnect()
+        })
     }
 
     function dc() {
         if (socket === null) return
-        document.getElementById("shuffle-teams-button").style.display = "none"
-        document.getElementById("start-game-button").style.display = "none"
-        document.getElementById("player-info-table").innerHTML = ""
-        document.getElementById("messages").innerHTML = "Messages:"
-        document.getElementById("messages").style.display = "none"
-        document.getElementById("hand").innerHTML = ""
-        document.getElementById("askbox").style.display = "none"
-        document.getElementById("declarebox").style.display = "none"
+        reset()
         socket.disconnect()
+    }
+
+    function dcAll() {
+        if (socket === null) return
+        socket.emit("dc-all")
     }
 
     function shuffleTeams() {

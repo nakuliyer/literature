@@ -205,12 +205,7 @@ class GM {
 
     sendMessage(socket, message) {
         sendAll(socket, 'message', { 
-            "message": message, 
-            "playerInTurn": this.playerInTurn, 
-            "books": [
-                this.booksByTeam[0].map((book) => BOOK_TO_BOOK_NAME[book]),
-                this.booksByTeam[1].map((book) => BOOK_TO_BOOK_NAME[book])
-            ]
+            "message": message
         })
     }
 
@@ -349,8 +344,17 @@ io.on('connection', socket => {
         gm.sendMessage(socket, `Player ${gm.getName(gm.playerInTurn)} is up`)
     })
 
-    socket.on('get-hand', () => {
-        socket.emit("get-hand-response", gm.getHand(playerIndex).map((card) => card.toName()), gm.getHand(playerIndex).map((card) => card.toSimple()))
+    socket.on('get-hand', () => { // this is more of a getIndo than a getHand
+        if (playerIndex < 0) return
+        socket.emit("get-hand-response", {
+            "handNames": gm.getHand(playerIndex).map((card) => card.toName()),
+            "handCodes": gm.getHand(playerIndex).map((card) => card.toSimple()),
+            "playerInTurn": gm.playerInTurn, 
+            "books": [
+                gm.booksByTeam[0].map((book) => BOOK_TO_BOOK_NAME[book]),
+                gm.booksByTeam[1].map((book) => BOOK_TO_BOOK_NAME[book])
+            ]
+        })
     })
 
     socket.on("ask-for-card", (playerName, prettyRank, prettySuit) => {
@@ -436,5 +440,10 @@ io.on('connection', socket => {
         gm.disconnect(playerIndex)
         console.log(gm.players)
         gm.sendTeams(socket)
+    })
+
+    socket.on('dc-all', () => {
+        console.log(`Disconnecting all players`)
+        sendAll(socket, "prepare-dc")
     })
 })
