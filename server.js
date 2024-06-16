@@ -52,9 +52,9 @@ const PRETTY_TO_SUIT = flip(SUIT_TO_NAME)
 
 function cardToName(rank, suit) {
     if (suit === "J") {
-        if (rank === "1") {
+        if (rank === "2") {
             return "BW Joker"
-        } else if (rank === "2") {
+        } else if (rank === "1") {
             return "Colored Joker"
         }
     }
@@ -67,10 +67,10 @@ function nameToCard(prettyRank, prettySuit) {
     let rank = ""
     let suit = ""
     if (prettyRank === "BW Joker") {
-        rank = "1"
+        rank = "2"
         suit = "J"
     } else if (prettyRank === "Colored Joker") {
-        rank = "2"
+        rank = "1"
         suit = "J"
     } else {
         rank = prettyRank in PRETTY_TO_RANK ? PRETTY_TO_RANK[prettyRank] : prettyRank
@@ -243,7 +243,7 @@ class GM {
     }
 
     getHand(playerIndex) {
-        return this.players[playerIndex].hand.map((card) => card.toName())
+        return this.players[playerIndex].hand
     }
 
     getName(playerIndex) {
@@ -341,13 +341,16 @@ io.on('connection', socket => {
     socket.on('start-game', () => {
         const resp = gm.startGame()
         socket.emit("start-game-response", resp)
+        if (resp != 1) {
+            return
+        }
         gm.sendMessage(socket, "Game Started!")
         gm.playerInTurn = Math.floor(Math.random() * gm.maxPlayers)
         gm.sendMessage(socket, `Player ${gm.getName(gm.playerInTurn)} is up`)
     })
 
     socket.on('get-hand', () => {
-        socket.emit("get-hand-response", gm.getHand(playerIndex))
+        socket.emit("get-hand-response", gm.getHand(playerIndex).map((card) => card.toName()), gm.getHand(playerIndex).map((card) => card.toSimple()))
     })
 
     socket.on("ask-for-card", (playerName, prettyRank, prettySuit) => {

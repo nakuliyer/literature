@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
             messages = messages.slice(-1 * LAST_N_MESSAGES)
             document.getElementById("messages").innerHTML = `Messages:<br/>${messages.join("<br/>")}`
             socket.emit('get-hand')
-            socket.on('get-hand-response', (hand) => {
+            socket.on('get-hand-response', (handNames, handCodes) => {
                 let handText = []
                 if (books[0].length) {
                     handText.push(`Team 1 has ${books[0].join(", ")}`)
@@ -65,7 +65,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     handText.push(`Game Over!`)
                 }
                 handText.push("")
-                handText.push(`Your Hand: ${hand.join(", ")}`)
+                // handText.push(`Your Hand: ${handNames.join(", ")}`)
+                handText.push(`Your Hand:`)
+                handText.push(handCodes.map((card) => `<img src="card/static/${card}.svg" style="width: 80px" />`).join(""))
                 document.getElementById("hand").innerHTML = handText.join("<br/>")
                 document.getElementById("declarebox").style.display = "inline"
                 document.getElementById("messages").style.display = "inline"
